@@ -54,7 +54,7 @@ function renderBlocks() {
         blockDiv.className = "blockItem";
         blockDiv.textContent = `${block.type} (${block.id})`;
 
-        // CUANDO SE CLICKEA → MOSTRAR PROPIEDADES
+        // 👇 ESTA ES LA PARTE QUE FALTABA
         blockDiv.onclick = () => {
             selectedBlock = block;
             renderProperties(block);
@@ -63,6 +63,7 @@ function renderBlocks() {
         container.appendChild(blockDiv);
     });
 }
+
 
 // ============================================================================
 //                FUNCIÓN PARA MOSTRAR PROPIEDADES EN PANEL DERECHO
@@ -127,5 +128,6 @@ function resetBuilder() {
     document.getElementById("builderArea").innerHTML = "";
     document.getElementById("propertiesPanel").innerHTML = "Selecciona un bloque";
 }
+
 
 
