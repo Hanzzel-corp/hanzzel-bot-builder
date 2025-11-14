@@ -1,0 +1,7 @@
+#app { display: flex; height: 85vh; }
+#sidebar { width: 20%; background: #111; color: white; padding: 10px; }
+#canvas { flex: 1; background: #222; padding: 10px; }
+#properties { width: 20%; background: #333; color: white; padding: 10px; }
+.block { width: 100%; margin-bottom: 10px; }
+.block-item { background: #444; color: #fff; padding: 8px; margin: 5px; cursor: move; }
+#footer { background: #111; color: white; padding: 10px; text-align: center; }
