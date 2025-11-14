@@ -2,36 +2,47 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Hanzzel V-BOT Builder ∑Δ</title>
+    <title>Hanzzel Bot Builder ∑Δ</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+    <header>
+        <h1>⚡ Hanzzel Bot Builder 2.0 ∑Δ</h1>
+        <button id="downloadBtn">⬇ Descargar Bot JSON</button>
+    </header>
 
-<div id="app">
-    <div id="leftPanel">
-        <h2>Bloques</h2>
+    <main>
+        <section id="left-panel">
+            <h2>Bloques disponibles</h2>
 
-        <button class="block-btn" onclick="addBlock('send_message')">✉️ Enviar Mensaje</button>
-        <button class="block-btn" onclick="addBlock('read_excel')">📘 Leer Excel</button>
-        <button class="block-btn" onclick="addBlock('wait')">⏳ Esperar</button>
-        <button class="block-btn" onclick="addBlock('conditional')">🔀 Condicional</button>
-    </div>
+            <button class="block-btn" data-type="send_message">📩 Enviar mensaje</button>
+            <button class="block-btn" data-type="read_excel">📘 Leer Excel</button>
+            <button class="block-btn" data-type="wait">⏳ Esperar</button>
+            <button class="block-btn" data-type="conditional">🔀 Condicional</button>
 
-    <div id="centerPanel">
-        <h2>Flujo del Bot</h2>
-        <ul id="blockList"></ul>
-        <button id="downloadBtn" onclick="downloadBot()">⬇ Descargar Bot</button>
-    </div>
+            <hr>
 
-    <div id="rightPanel">
-        <h2>Propiedades</h2>
-        <div id="propertiesPanel">Selecciona un bloque.</div>
-    </div>
-</div>
+            <h3>Validación</h3>
+            <div id="validation-box">Sin validar…</div>
+        </section>
 
-<script src="script.js"></script>
+        <section id="center-panel">
+            <h2>Secuencia del Bot</h2>
+            <div id="sequence"></div>
+        </section>
+
+        <section id="right-panel">
+            <h2>Propiedades del bloque</h2>
+            <div id="properties"></div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
 </body>
 </html>
+
+
 
 
 
