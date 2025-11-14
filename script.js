@@ -1,129 +1,188 @@
 let blocks = [];
-let selectedId = null;
+let selectedBlock = null;
 
-// Crear un nuevo bloque
-function addBlock(type) {
-    const id = Date.now(); // id único
+const sequence = document.getElementById("sequence");
+const properties = document.getElementById("properties");
+const validationBox = document.getElementById("validation-box");
 
-    const block = {
-        id: id,
-        type: type,
-        props: {}
-    };
-
-    // Props por defecto
-    if (type === "send_message") {
-        block.props = { message: "", target: "", mode: "telegram" };
-    }
-    if (type === "read_excel") {
-        block.props = { file: "" };
-    }
-    if (type === "wait") {
-        block.props = { time: 1 };
-    }
-    if (type === "conditional") {
-        block.props = { condition: "", true_action: null, false_action: null };
-    }
-
-    blocks.push(block);
-    renderBlocks();
+// Crear un ID único
+function generateId() {
+    return Date.now() + Math.floor(Math.random() * 99999);
 }
 
-// Mostrar lista de bloques
-function renderBlocks() {
-    const list = document.getElementById("blockList");
-    list.innerHTML = "";
+// Agregar bloque desde el panel izquierdo
+document.querySelectorAll(".block-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const type = btn.dataset.type;
 
-    blocks.forEach(block => {
-        const li = document.createElement("li");
-        li.className = "block-item" + (selectedId === block.id ? " selected" : "");
-        li.innerText = `[${block.id}] ${block.type}`;
-        li.onclick = () => selectBlock(block.id);
-        list.appendChild(li);
+        const newBlock = {
+            id: generateId(),
+            type,
+            props: {}
+        };
+
+        blocks.push(newBlock);
+        renderBlocks();
     });
+});
+
+// Renderizar los bloques en el panel central
+function renderBlocks() {
+    sequence.innerHTML = "";
+
+    blocks.forEach(b => {
+        const div = document.createElement("div");
+        div.className = "block" + (selectedBlock === b.id ? " selected" : "");
+        div.innerHTML = `<b>[${b.id}] — ${b.type}</b>`;
+
+        div.addEventListener("click", () => {
+            selectedBlock = b.id;
+            renderBlocks();
+            renderProperties();
+        });
+
+        sequence.appendChild(div);
+    });
+
+    validateBot();
 }
 
-// Seleccionar bloque
-function selectBlock(id) {
-    selectedId = id;
-    renderBlocks();
-    renderProperties();
-}
-
-// Panel derecho dinámico
+// Renderizar las propiedades de un bloque
 function renderProperties() {
-    const panel = document.getElementById("propertiesPanel");
-    const block = blocks.find(b => b.id === selectedId);
-    if (!block) {
-        panel.innerHTML = "Selecciona un bloque.";
-        return;
+    properties.innerHTML = "";
+    const b = blocks.find(x => x.id === selectedBlock);
+    if (!b) return;
+
+    // --- SEND MESSAGE ---
+    if (b.type === "send_message") {
+        properties.innerHTML = `
+            <div class="property-field">
+                <label>Mensaje</label>
+                <input type="text" id="msg" value="${b.props.message || ""}">
+            </div>
+            <div class="property-field">
+                <label>Target</label>
+                <input type="text" id="target" value="${b.props.target || ""}">
+            </div>
+        `;
+
+        document.getElementById("msg").oninput = e => b.props.message = e.target.value;
+        document.getElementById("target").oninput = e => b.props.target = e.target.value;
     }
 
-    let html = `<h3>${block.type}</h3>`;
+    // --- READ EXCEL ---
+    if (b.type === "read_excel") {
+        properties.innerHTML = `
+            <div class="property-field">
+                <label>Archivo Excel</label>
+                <input type="text" id="file" placeholder="ej: datos.xlsx" value="${b.props.file || ""}">
+            </div>
+        `;
 
-    for (let prop in block.props) {
-        html += `<div class="prop-row"><label>${prop}</label>`;
-
-        if (block.type === "conditional" && (prop === "true_action" || prop === "false_action")) {
-
-            html += `<select onchange="updateProp('${prop}', this.value)">`;
-            html += `<option value="">(ninguno)</option>`;
-
-            blocks.forEach(b => {
-                if (b.id !== block.id) {
-                    html += `<option value="${b.id}">${b.id} — ${b.type}</option>`;
-                }
-            });
-
-            html += `</select></div>`;
-        }
-        else {
-            html += `<input value="${block.props[prop]}" 
-                     onchange="updateProp('${prop}', this.value)"> </div>`;
-        }
+        document.getElementById("file").oninput = e => b.props.file = e.target.value;
     }
 
-    panel.innerHTML = html;
+    // --- WAIT ---
+    if (b.type === "wait") {
+        properties.innerHTML = `
+            <div class="property-field">
+                <label>Tiempo (segundos)</label>
+                <input type="number" id="time" min="1" value="${b.props.time || 1}">
+            </div>
+        `;
+
+        document.getElementById("time").oninput = e => b.props.time = Number(e.target.value);
+    }
+
+    // --- CONDITIONAL ---
+    if (b.type === "conditional") {
+        const options = blocks
+            .map(bl => `<option value="${bl.id}">${bl.id} — ${bl.type}</option>`)
+            .join("");
+
+        properties.innerHTML = `
+            <div class="property-field">
+                <label>Condición (Python)</label>
+                <input type="text" id="cond" value="${b.props.condition || ""}">
+            </div>
+
+            <div class="property-field">
+                <label>True Action</label>
+                <select id="trueA">
+                    <option value="">(ninguna)</option>
+                    ${options}
+                </select>
+            </div>
+
+            <div class="property-field">
+                <label>False Action</label>
+                <select id="falseA">
+                    <option value="">(ninguna)</option>
+                    ${options}
+                </select>
+            </div>
+        `;
+
+        document.getElementById("cond").oninput = e => b.props.condition = e.target.value;
+        document.getElementById("trueA").value = b.props.true_action || "";
+        document.getElementById("falseA").value = b.props.false_action || "";
+
+        document.getElementById("trueA").onchange = e => {
+            b.props.true_action = Number(e.target.value);
+        };
+        document.getElementById("falseA").onchange = e => {
+            b.props.false_action = Number(e.target.value);
+        };
+    }
 }
 
-// Actualizar propiedades
-function updateProp(key, value) {
-    const block = blocks.find(b => b.id === selectedId);
-    if (!block) return;
+// Validación completa del bot
+function validateBot() {
+    let msgs = [];
 
-    // Convertir números automáticamente
-    if (!isNaN(value) && value.trim() !== "") {
-        value = Number(value);
+    blocks.forEach(b => {
+        if (b.type === "conditional") {
+            if (!b.props.condition) {
+                msgs.push(`❌ Bloque ${b.id}: condición vacía`);
+            }
+            if (b.props.true_action && !blocks.find(x => x.id === b.props.true_action)) {
+                msgs.push(`❌ Bloque ${b.id}: true_action apunta a bloque inexistente`);
+            }
+            if (b.props.false_action && !blocks.find(x => x.id === b.props.false_action)) {
+                msgs.push(`❌ Bloque ${b.id}: false_action apunta a bloque inexistente`);
+            }
+        }
+
+        if (b.type === "wait") {
+            if (!b.props.time || b.props.time < 1) {
+                msgs.push(`⚠️ Bloque ${b.id}: tiempo inválido`);
+            }
+        }
+    });
+
+    if (msgs.length === 0) {
+        validationBox.innerHTML = `<span class="success">✔ Sin errores</span>`;
+    } else {
+        validationBox.innerHTML = msgs.map(m => `<div class="error">${m}</div>`).join("");
     }
-
-    // Convertir vacío a null
-    if (value === "") value = null;
-
-    block.props[key] = value;
 }
 
 // Descargar JSON
-function downloadBot() {
-    // Validación mínima
-    for (let block of blocks) {
-        if (block.type === "conditional") {
-            if (!block.props.condition) {
-                alert(`Bloque ${block.id}: condición vacía`);
-                return;
-            }
-        }
-    }
+document.getElementById("downloadBtn").addEventListener("click", () => {
+    validateBot();
 
-    const content = JSON.stringify(blocks, null, 4);
-
-    const blob = new Blob([content], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(blocks, null, 4)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
     a.download = "bot.json";
     a.click();
-}
+
+    URL.revokeObjectURL(url);
+});
+
+
 
 
 
