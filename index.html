@@ -2,45 +2,25 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Hanzzel Bot Builder ∑Δ</title>
+    <title>Hanzzel Bot Builder 2.0 ∑Δ</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <header>
-        <h1>⚡ Hanzzel Bot Builder 2.0 ∑Δ</h1>
-        <button id="downloadBtn">⬇ Descargar Bot JSON</button>
-    </header>
+    <header><h1>⚡ Hanzzel Bot Builder 2.0 ∑Δ</h1></header>
 
     <main>
-        <section id="left-panel">
-            <h2>Bloques disponibles</h2>
-
-            <button class="block-btn" data-type="send_message">📩 Enviar mensaje</button>
-            <button class="block-btn" data-type="read_excel">📘 Leer Excel</button>
-            <button class="block-btn" data-type="wait">⏳ Esperar</button>
-            <button class="block-btn" data-type="conditional">🔀 Condicional</button>
-
-            <hr>
-
-            <h3>Validación</h3>
-            <div id="validation-box">Sin validar…</div>
-        </section>
-
-        <section id="center-panel">
-            <h2>Secuencia del Bot</h2>
-            <div id="sequence"></div>
-        </section>
-
-        <section id="right-panel">
-            <h2>Propiedades del bloque</h2>
-            <div id="properties"></div>
-        </section>
+        <div id="blocks-panel"></div>
+        <div id="sequence"></div>
+        <div id="properties"></div>
     </main>
+
+    <button id="download-json">⬇ Descargar Bot JSON</button>
 
     <script src="script.js"></script>
 </body>
 </html>
+
+
 
 
 
