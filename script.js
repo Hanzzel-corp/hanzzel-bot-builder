@@ -87,10 +87,18 @@ function selectBlock(id) {
 }
 
 function updateProp(id, key, value) {
-    const block = blocks.find(b => b.id === id);
-    if (!block) return;
+    const index = blocks.findIndex(b => b.id === id);
+    if (index === -1) return;
 
-    block.props[key] = value;
+    // Crear props si no existen
+    if (!blocks[index].props) {
+        blocks[index].props = {};
+    }
+
+    // Guardar
+    blocks[index].props[key] = value;
+
+    console.log("Actualizado:", blocks[index]);
 }
 
 function downloadBot() {
@@ -109,6 +117,7 @@ function resetBot() {
     renderBlocks();
     document.getElementById("propertiesPanel").innerText = "Selecciona un bloque";
 }
+
 
 
 
