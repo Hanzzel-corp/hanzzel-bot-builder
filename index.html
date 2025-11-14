@@ -8,38 +8,41 @@
 </head>
 <body>
 
-<div id="container">
+<div class="container">
 
     <!-- PANEL IZQUIERDO -->
-    <div id="leftPanel">
+    <div class="left-panel">
         <h2>Bloques</h2>
 
-        <button class="blockButton" data-type="read_excel">Leer Excel</button>
-        <button class="blockButton" data-type="send_message">Enviar Mensaje</button>
-        <button class="blockButton" data-type="conditional">Condicional</button>
-        <button class="blockButton" data-type="wait">Esperar</button>
+        <button class="block-btn" onclick="addBlock('read_excel')">Leer Excel</button>
+        <button class="block-btn" onclick="addBlock('send_message')">Enviar Mensaje</button>
+        <button class="block-btn" onclick="addBlock('conditional')">Condicional</button>
+        <button class="block-btn" onclick="addBlock('wait')">Esperar</button>
     </div>
 
-    <!-- ÁREA CENTRAL DEL BUILDER -->
-    <div id="builderArea"></div>
+    <!-- ZONA CENTRAL -->
+    <div class="center-panel">
+        <div id="blockList"></div>
+
+        <div class="bottom-buttons">
+            <button onclick="downloadBot()">Descargar Bot</button>
+            <button onclick="resetBot()">Reset</button>
+        </div>
+    </div>
 
     <!-- PANEL DERECHO -->
-    <div id="rightPanel">
+    <div class="right-panel">
         <h2>Propiedades</h2>
-        <div id="propertiesBox">Selecciona un bloque</div>
+        <div id="propertiesPanel">Selecciona un bloque</div>
     </div>
 
-</div>
-
-<!-- BOTONES FINALES -->
-<div id="footerButtons">
-    <button id="downloadBtn">Descargar Bot</button>
-    <button id="resetBtn">Reset</button>
 </div>
 
 <script src="script.js"></script>
 </body>
 </html>
+
+
 
 
 
