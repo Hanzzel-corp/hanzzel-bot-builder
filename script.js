@@ -1,122 +1,131 @@
 let blocks = [];
-let selectedBlockId = null;
+let selectedId = null;
 
+// Crear un nuevo bloque
 function addBlock(type) {
-    const id = Date.now();
-    const block = { id, type, props: {} };
+    const id = Date.now(); // id único
+
+    const block = {
+        id: id,
+        type: type,
+        props: {}
+    };
+
+    // Props por defecto
+    if (type === "send_message") {
+        block.props = { message: "", target: "", mode: "telegram" };
+    }
+    if (type === "read_excel") {
+        block.props = { file: "" };
+    }
+    if (type === "wait") {
+        block.props = { time: 1 };
+    }
+    if (type === "conditional") {
+        block.props = { condition: "", true_action: null, false_action: null };
+    }
 
     blocks.push(block);
     renderBlocks();
 }
 
+// Mostrar lista de bloques
 function renderBlocks() {
-    const container = document.getElementById("blockList");
-    container.innerHTML = "";
+    const list = document.getElementById("blockList");
+    list.innerHTML = "";
 
     blocks.forEach(block => {
-        const div = document.createElement("div");
-        div.className = "block-item";
-        div.innerText = `${block.type} (${block.id})`;
-
-        div.onclick = () => selectBlock(block.id);
-
-        container.appendChild(div);
+        const li = document.createElement("li");
+        li.className = "block-item" + (selectedId === block.id ? " selected" : "");
+        li.innerText = `[${block.id}] ${block.type}`;
+        li.onclick = () => selectBlock(block.id);
+        list.appendChild(li);
     });
 }
 
+// Seleccionar bloque
 function selectBlock(id) {
-    selectedBlockId = id;
-    const block = blocks.find(b => b.id === id);
+    selectedId = id;
+    renderBlocks();
+    renderProperties();
+}
 
+// Panel derecho dinámico
+function renderProperties() {
     const panel = document.getElementById("propertiesPanel");
-    panel.innerHTML = "";
+    const block = blocks.find(b => b.id === selectedId);
+    if (!block) {
+        panel.innerHTML = "Selecciona un bloque.";
+        return;
+    }
 
+    let html = `<h3>${block.type}</h3>`;
+
+    for (let prop in block.props) {
+        html += `<div class="prop-row"><label>${prop}</label>`;
+
+        if (block.type === "conditional" && (prop === "true_action" || prop === "false_action")) {
+
+            html += `<select onchange="updateProp('${prop}', this.value)">`;
+            html += `<option value="">(ninguno)</option>`;
+
+            blocks.forEach(b => {
+                if (b.id !== block.id) {
+                    html += `<option value="${b.id}">${b.id} — ${b.type}</option>`;
+                }
+            });
+
+            html += `</select></div>`;
+        }
+        else {
+            html += `<input value="${block.props[prop]}" 
+                     onchange="updateProp('${prop}', this.value)"> </div>`;
+        }
+    }
+
+    panel.innerHTML = html;
+}
+
+// Actualizar propiedades
+function updateProp(key, value) {
+    const block = blocks.find(b => b.id === selectedId);
     if (!block) return;
 
-    // --- FORMULARIOS POR TIPO DE BLOQUE ---
-    if (block.type === "read_excel") {
-        panel.innerHTML = `
-            <label class='prop-label'>Ruta del archivo:</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'path', this.value)">
-
-            <label class='prop-label'>Hoja:</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'sheet', this.value)">
-
-            <label class='prop-label'>Rango (opcional):</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'range', this.value)">
-        `;
+    // Convertir números automáticamente
+    if (!isNaN(value) && value.trim() !== "") {
+        value = Number(value);
     }
 
-    else if (block.type === "send_message") {
-        panel.innerHTML = `
-            <label class='prop-label'>Mensaje:</label>
-            <textarea class='prop-textarea' onchange="updateProp(${id}, 'message', this.value)"></textarea>
+    // Convertir vacío a null
+    if (value === "") value = null;
 
-            <label class='prop-label'>Destino:</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'target', this.value)">
-
-            <label class='prop-label'>Modo:</label>
-            <select class='prop-select' onchange="updateProp(${id}, 'mode', this.value)">
-                <option value="log">log</option>
-                <option value="print">print</option>
-                <option value="telegram">telegram</option>
-                <option value="whatsapp">whatsapp</option>
-            </select>
-        `;
-    }
-
-    else if (block.type === "conditional") {
-        panel.innerHTML = `
-            <label class='prop-label'>Condición:</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'condition', this.value)">
-
-            <label class='prop-label'>Acción si verdadero:</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'true_action', this.value)">
-
-            <label class='prop-label'>Acción si falso:</label>
-            <input class='prop-input' onchange="updateProp(${id}, 'false_action', this.value)">
-        `;
-    }
-
-    else if (block.type === "wait") {
-        panel.innerHTML = `
-            <label class='prop-label'>Tiempo (segundos):</label>
-            <input type="number" class='prop-input' onchange="updateProp(${id}, 'time', this.value)">
-        `;
-    }
+    block.props[key] = value;
 }
 
-function updateProp(id, key, value) {
-    const index = blocks.findIndex(b => b.id === id);
-    if (index === -1) return;
-
-    // Crear props si no existen
-    if (!blocks[index].props) {
-        blocks[index].props = {};
-    }
-
-    // Guardar
-    blocks[index].props[key] = value;
-
-    console.log("Actualizado:", blocks[index]);
-}
-
+// Descargar JSON
 function downloadBot() {
-    const data = JSON.stringify(blocks, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
+    // Validación mínima
+    for (let block of blocks) {
+        if (block.type === "conditional") {
+            if (!block.props.condition) {
+                alert(`Bloque ${block.id}: condición vacía`);
+                return;
+            }
+        }
+    }
+
+    const content = JSON.stringify(blocks, null, 4);
+
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = "bot.json";
     a.click();
 }
 
-function resetBot() {
-    blocks = [];
-    selectedBlockId = null;
-    renderBlocks();
-    document.getElementById("propertiesPanel").innerText = "Selecciona un bloque";
-}
+
 
 
 
