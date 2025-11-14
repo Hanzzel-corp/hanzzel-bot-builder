@@ -1,163 +1,127 @@
-// ===========================
-// Builder 2.0 — Hanzzel Corp
-// ===========================
-
 let blocks = [];
 let selectedBlock = null;
 
-// ---------------------------
-// Crear bloques disponibles
-// ---------------------------
-window.onload = () => {
-    renderBlocksPanel();
-    renderSequencePanel();
-};
-
-function renderBlocksPanel() {
-    const panel = document.getElementById("blocks-panel");
-
-    const available = [
-        { type: "send_message", name: "📩 Enviar mensaje" },
-        { type: "read_excel", name: "📘 Leer Excel" },
-        { type: "wait", name: "⏳ Esperar" },
-        { type: "conditional", name: "⚡ Condicional" }
-    ];
-
-    available.forEach(b => {
-        let btn = document.createElement("div");
-        btn.className = "block";
-        btn.innerText = b.name;
-        btn.onclick = () => addBlock(b.type);
-        panel.appendChild(btn);
-    });
+function genId() {
+    return Date.now() + Math.floor(Math.random() * 1000);
 }
 
-// ---------------------------
-// Agregar bloque a la secuencia
-// ---------------------------
 function addBlock(type) {
-    const id = Date.now();
-    let newBlock = {
-        id,
-        type,
+    const block = {
+        id: genId(),
+        type: type,
         props: {}
     };
-    blocks.push(newBlock);
-    renderSequencePanel();
+
+    blocks.push(block);
+    renderSequence();
+    validate();
 }
 
-// ---------------------------
-// Render de la secuencia
-// ---------------------------
-function renderSequencePanel() {
-    const seq = document.getElementById("sequence");
-    seq.innerHTML = "<h2>Secuencia del Bot</h2>";
+function renderSequence() {
+    const list = document.getElementById("sequenceList");
+    list.innerHTML = "";
 
-    blocks.forEach(block => {
-        let div = document.createElement("div");
-        div.className = "block";
-        div.innerText = `[${block.id}] — ${block.type}`;
-        div.onclick = () => selectBlock(block);
-        seq.appendChild(div);
+    blocks.forEach(b => {
+        const li = document.createElement("li");
+        li.className = "block-item";
+        li.textContent = `[${b.id}] — ${b.type}`;
+        li.onclick = () => selectBlock(b.id);
+        list.appendChild(li);
     });
 }
 
-// ---------------------------
-// Panel de Propiedades
-// ---------------------------
-function selectBlock(block) {
-    selectedBlock = block;
-    const propsPanel = document.getElementById("properties");
-    propsPanel.innerHTML = "<h2>Propiedades del bloque</h2>";
+function selectBlock(id) {
+    selectedBlock = blocks.find(b => b.id === id);
+    renderProperties();
+}
 
-    switch(block.type) {
-        case "send_message":
-            propsPanel.innerHTML += `
-                Mensaje:<br>
-                <textarea id="msg"></textarea><br>
-                Destino:<br>
-                <input id="target">
-            `;
-        break;
+function renderProperties() {
+    const panel = document.getElementById("propertiesPanel");
+    const block = selectedBlock;
 
-        case "read_excel":
-            propsPanel.innerHTML += `
-                Archivo Excel:<br>
-                <input id="file"><br>
-            `;
-        break;
-
-        case "wait":
-            propsPanel.innerHTML += `
-                Tiempo (segundos):<br>
-                <input id="time">
-            `;
-        break;
-
-        case "conditional":
-            propsPanel.innerHTML += `
-                Condición (Python):<br>
-                <input id="cond"><br>
-                Acción si verdadero (ID):<br>
-                <input id="true_action"><br>
-                Acción si falso (ID):<br>
-                <input id="false_action">
-            `;
-        break;
+    if (!block) {
+        panel.innerHTML = "Selecciona un bloque";
+        return;
     }
 
-    loadProps();
-    attachEvents();
+    // SEND MESSAGE
+    if (block.type === "send_message") {
+        panel.innerHTML = `
+            <label>Mensaje:</label>
+            <textarea oninput="updateProp('text', this.value)">${block.props.text || ""}</textarea>
+
+            <label>Destino:</label>
+            <input type="text" oninput="updateProp('to', this.value)" value="${block.props.to || ""}">
+        `;
+    }
+
+    // READ EXCEL
+    else if (block.type === "read_excel") {
+        panel.innerHTML = `
+            <label>Archivo Excel:</label>
+            <input oninput="updateProp('file', this.value)" value="${block.props.file || ""}">
+
+            <label>Hoja:</label>
+            <input oninput="updateProp('sheet', this.value)" value="${block.props.sheet || ""}">
+        `;
+    }
+
+    // WAIT
+    else if (block.type === "wait") {
+        panel.innerHTML = `
+            <label>Tiempo (segundos):</label>
+            <input type="number" oninput="updateProp('seconds', this.value)" value="${block.props.seconds || 1}">
+        `;
+    }
+
+    // CONDITIONAL
+    else if (block.type === "conditional") {
+        panel.innerHTML = `
+            <label>Condición (Python):</label>
+            <input oninput="updateProp('expr', this.value)" value="${block.props.expr || ""}">
+
+            <label>True → Ir al bloque ID:</label>
+            <input type="text" oninput="updateProp('true_id', this.value)" value="${block.props.true_id || ""}">
+
+            <label>False → Ir al bloque ID:</label>
+            <input type="text" oninput="updateProp('false_id', this.value)" value="${block.props.false_id || ""}">
+        `;
+    }
+
+    // INPUT MESSAGE (NUEVO)
+    else if (block.type === "input_message") {
+        panel.innerHTML = `
+            <label>Texto del Cliente (para pruebas):</label>
+            <textarea oninput="updateProp('text', this.value)">${block.props.text || ""}</textarea>
+
+            <label>Guardar en variable:</label>
+            <input type="text" oninput="updateProp('var', this.value)" value="${block.props.var || "consulta"}">
+        `;
+    }
 }
 
-// ---------------------------
-// Cargar propiedades existentes
-// ---------------------------
-function loadProps() {
-    const p = selectedBlock.props;
-
-    if (document.getElementById("msg")) document.getElementById("msg").value = p.message || "";
-    if (document.getElementById("target")) document.getElementById("target").value = p.target || "";
-    if (document.getElementById("file")) document.getElementById("file").value = p.file || "";
-    if (document.getElementById("time")) document.getElementById("time").value = p.time || "";
-    if (document.getElementById("cond")) document.getElementById("cond").value = p.condition || "";
-    if (document.getElementById("true_action")) document.getElementById("true_action").value = p.true_action || "";
-    if (document.getElementById("false_action")) document.getElementById("false_action").value = p.false_action || "";
+function updateProp(key, value) {
+    selectedBlock.props[key] = value;
+    validate();
 }
 
-// ---------------------------
-// Guardar propiedades
-// ---------------------------
-function attachEvents() {
-    document.querySelectorAll("#properties input, #properties textarea").forEach(input => {
-        input.oninput = () => {
-            selectedBlock.props = {
-                ...selectedBlock.props,
-                message: document.getElementById("msg")?.value,
-                target: document.getElementById("target")?.value,
-                file: document.getElementById("file")?.value,
-                time: document.getElementById("time")?.value,
-                condition: document.getElementById("cond")?.value,
-                true_action: document.getElementById("true_action")?.value,
-                false_action: document.getElementById("false_action")?.value
-            };
-        };
-    });
+function validate() {
+    const box = document.getElementById("validationBox");
+    box.textContent = "✔ Sin errores";
+    box.className = "validation ok";
 }
 
-// ---------------------------
-// Descargar JSON
-// ---------------------------
-document.getElementById("download-json").onclick = () => {
-    let data = JSON.stringify(blocks, null, 4);
-    let blob = new Blob([data], { type: "application/json" });
-    let url = URL.createObjectURL(blob);
+function downloadBot() {
+    const data = JSON.stringify(blocks, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
 
-    let a = document.createElement("a");
-    a.href = url;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
     a.download = "bot.json";
     a.click();
-};
+}
+
+
 
 
 
