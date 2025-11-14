@@ -1,186 +1,164 @@
+// ===========================
+// Builder 2.0 — Hanzzel Corp
+// ===========================
+
 let blocks = [];
 let selectedBlock = null;
 
-const sequence = document.getElementById("sequence");
-const properties = document.getElementById("properties");
-const validationBox = document.getElementById("validation-box");
+// ---------------------------
+// Crear bloques disponibles
+// ---------------------------
+window.onload = () => {
+    renderBlocksPanel();
+    renderSequencePanel();
+};
 
-// Crear un ID único
-function generateId() {
-    return Date.now() + Math.floor(Math.random() * 99999);
-}
+function renderBlocksPanel() {
+    const panel = document.getElementById("blocks-panel");
 
-// Agregar bloque desde el panel izquierdo
-document.querySelectorAll(".block-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const type = btn.dataset.type;
+    const available = [
+        { type: "send_message", name: "📩 Enviar mensaje" },
+        { type: "read_excel", name: "📘 Leer Excel" },
+        { type: "wait", name: "⏳ Esperar" },
+        { type: "conditional", name: "⚡ Condicional" }
+    ];
 
-        const newBlock = {
-            id: generateId(),
-            type,
-            props: {}
-        };
-
-        blocks.push(newBlock);
-        renderBlocks();
+    available.forEach(b => {
+        let btn = document.createElement("div");
+        btn.className = "block";
+        btn.innerText = b.name;
+        btn.onclick = () => addBlock(b.type);
+        panel.appendChild(btn);
     });
-});
+}
 
-// Renderizar los bloques en el panel central
-function renderBlocks() {
-    sequence.innerHTML = "";
+// ---------------------------
+// Agregar bloque a la secuencia
+// ---------------------------
+function addBlock(type) {
+    const id = Date.now();
+    let newBlock = {
+        id,
+        type,
+        props: {}
+    };
+    blocks.push(newBlock);
+    renderSequencePanel();
+}
 
-    blocks.forEach(b => {
-        const div = document.createElement("div");
-        div.className = "block" + (selectedBlock === b.id ? " selected" : "");
-        div.innerHTML = `<b>[${b.id}] — ${b.type}</b>`;
+// ---------------------------
+// Render de la secuencia
+// ---------------------------
+function renderSequencePanel() {
+    const seq = document.getElementById("sequence");
+    seq.innerHTML = "<h2>Secuencia del Bot</h2>";
 
-        div.addEventListener("click", () => {
-            selectedBlock = b.id;
-            renderBlocks();
-            renderProperties();
-        });
-
-        sequence.appendChild(div);
+    blocks.forEach(block => {
+        let div = document.createElement("div");
+        div.className = "block";
+        div.innerText = `[${block.id}] — ${block.type}`;
+        div.onclick = () => selectBlock(block);
+        seq.appendChild(div);
     });
-
-    validateBot();
 }
 
-// Renderizar las propiedades de un bloque
-function renderProperties() {
-    properties.innerHTML = "";
-    const b = blocks.find(x => x.id === selectedBlock);
-    if (!b) return;
+// ---------------------------
+// Panel de Propiedades
+// ---------------------------
+function selectBlock(block) {
+    selectedBlock = block;
+    const propsPanel = document.getElementById("properties");
+    propsPanel.innerHTML = "<h2>Propiedades del bloque</h2>";
 
-    // --- SEND MESSAGE ---
-    if (b.type === "send_message") {
-        properties.innerHTML = `
-            <div class="property-field">
-                <label>Mensaje</label>
-                <input type="text" id="msg" value="${b.props.message || ""}">
-            </div>
-            <div class="property-field">
-                <label>Target</label>
-                <input type="text" id="target" value="${b.props.target || ""}">
-            </div>
-        `;
+    switch(block.type) {
+        case "send_message":
+            propsPanel.innerHTML += `
+                Mensaje:<br>
+                <textarea id="msg"></textarea><br>
+                Destino:<br>
+                <input id="target">
+            `;
+        break;
 
-        document.getElementById("msg").oninput = e => b.props.message = e.target.value;
-        document.getElementById("target").oninput = e => b.props.target = e.target.value;
+        case "read_excel":
+            propsPanel.innerHTML += `
+                Archivo Excel:<br>
+                <input id="file"><br>
+            `;
+        break;
+
+        case "wait":
+            propsPanel.innerHTML += `
+                Tiempo (segundos):<br>
+                <input id="time">
+            `;
+        break;
+
+        case "conditional":
+            propsPanel.innerHTML += `
+                Condición (Python):<br>
+                <input id="cond"><br>
+                Acción si verdadero (ID):<br>
+                <input id="true_action"><br>
+                Acción si falso (ID):<br>
+                <input id="false_action">
+            `;
+        break;
     }
 
-    // --- READ EXCEL ---
-    if (b.type === "read_excel") {
-        properties.innerHTML = `
-            <div class="property-field">
-                <label>Archivo Excel</label>
-                <input type="text" id="file" placeholder="ej: datos.xlsx" value="${b.props.file || ""}">
-            </div>
-        `;
-
-        document.getElementById("file").oninput = e => b.props.file = e.target.value;
-    }
-
-    // --- WAIT ---
-    if (b.type === "wait") {
-        properties.innerHTML = `
-            <div class="property-field">
-                <label>Tiempo (segundos)</label>
-                <input type="number" id="time" min="1" value="${b.props.time || 1}">
-            </div>
-        `;
-
-        document.getElementById("time").oninput = e => b.props.time = Number(e.target.value);
-    }
-
-    // --- CONDITIONAL ---
-    if (b.type === "conditional") {
-        const options = blocks
-            .map(bl => `<option value="${bl.id}">${bl.id} — ${bl.type}</option>`)
-            .join("");
-
-        properties.innerHTML = `
-            <div class="property-field">
-                <label>Condición (Python)</label>
-                <input type="text" id="cond" value="${b.props.condition || ""}">
-            </div>
-
-            <div class="property-field">
-                <label>True Action</label>
-                <select id="trueA">
-                    <option value="">(ninguna)</option>
-                    ${options}
-                </select>
-            </div>
-
-            <div class="property-field">
-                <label>False Action</label>
-                <select id="falseA">
-                    <option value="">(ninguna)</option>
-                    ${options}
-                </select>
-            </div>
-        `;
-
-        document.getElementById("cond").oninput = e => b.props.condition = e.target.value;
-        document.getElementById("trueA").value = b.props.true_action || "";
-        document.getElementById("falseA").value = b.props.false_action || "";
-
-        document.getElementById("trueA").onchange = e => {
-            b.props.true_action = Number(e.target.value);
-        };
-        document.getElementById("falseA").onchange = e => {
-            b.props.false_action = Number(e.target.value);
-        };
-    }
+    loadProps();
+    attachEvents();
 }
 
-// Validación completa del bot
-function validateBot() {
-    let msgs = [];
+// ---------------------------
+// Cargar propiedades existentes
+// ---------------------------
+function loadProps() {
+    const p = selectedBlock.props;
 
-    blocks.forEach(b => {
-        if (b.type === "conditional") {
-            if (!b.props.condition) {
-                msgs.push(`❌ Bloque ${b.id}: condición vacía`);
-            }
-            if (b.props.true_action && !blocks.find(x => x.id === b.props.true_action)) {
-                msgs.push(`❌ Bloque ${b.id}: true_action apunta a bloque inexistente`);
-            }
-            if (b.props.false_action && !blocks.find(x => x.id === b.props.false_action)) {
-                msgs.push(`❌ Bloque ${b.id}: false_action apunta a bloque inexistente`);
-            }
-        }
+    if (document.getElementById("msg")) document.getElementById("msg").value = p.message || "";
+    if (document.getElementById("target")) document.getElementById("target").value = p.target || "";
+    if (document.getElementById("file")) document.getElementById("file").value = p.file || "";
+    if (document.getElementById("time")) document.getElementById("time").value = p.time || "";
+    if (document.getElementById("cond")) document.getElementById("cond").value = p.condition || "";
+    if (document.getElementById("true_action")) document.getElementById("true_action").value = p.true_action || "";
+    if (document.getElementById("false_action")) document.getElementById("false_action").value = p.false_action || "";
+}
 
-        if (b.type === "wait") {
-            if (!b.props.time || b.props.time < 1) {
-                msgs.push(`⚠️ Bloque ${b.id}: tiempo inválido`);
-            }
-        }
+// ---------------------------
+// Guardar propiedades
+// ---------------------------
+function attachEvents() {
+    document.querySelectorAll("#properties input, #properties textarea").forEach(input => {
+        input.oninput = () => {
+            selectedBlock.props = {
+                ...selectedBlock.props,
+                message: document.getElementById("msg")?.value,
+                target: document.getElementById("target")?.value,
+                file: document.getElementById("file")?.value,
+                time: document.getElementById("time")?.value,
+                condition: document.getElementById("cond")?.value,
+                true_action: document.getElementById("true_action")?.value,
+                false_action: document.getElementById("false_action")?.value
+            };
+        };
     });
-
-    if (msgs.length === 0) {
-        validationBox.innerHTML = `<span class="success">✔ Sin errores</span>`;
-    } else {
-        validationBox.innerHTML = msgs.map(m => `<div class="error">${m}</div>`).join("");
-    }
 }
 
+// ---------------------------
 // Descargar JSON
-document.getElementById("downloadBtn").addEventListener("click", () => {
-    validateBot();
+// ---------------------------
+document.getElementById("download-json").onclick = () => {
+    let data = JSON.stringify(blocks, null, 4);
+    let blob = new Blob([data], { type: "application/json" });
+    let url = URL.createObjectURL(blob);
 
-    const blob = new Blob([JSON.stringify(blocks, null, 4)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
+    let a = document.createElement("a");
     a.href = url;
     a.download = "bot.json";
     a.click();
+};
 
-    URL.revokeObjectURL(url);
-});
 
 
 
