@@ -1,133 +1,96 @@
-// =============== CONFIGURACIÓN DE PROPIEDADES DE CADA BLOQUE ===============
-const blockProperties = {
-    "read_excel": [
-        { name: "file", label: "Archivo Excel", type: "text", placeholder: "ruta.xlsx" },
-        { name: "sheet", label: "Hoja", type: "text", placeholder: "Sheet1" }
-    ],
+let blocks = [];
+let selectedBlock = null;
 
-    "send_message": [
-        { name: "text", label: "Texto del mensaje", type: "text", placeholder: "Hola mundo" }
-    ],
+const builderArea = document.getElementById("builderArea");
+const propertiesBox = document.getElementById("propertiesBox");
 
-    "if": [
-        { name: "var", label: "Variable", type: "text", placeholder: "x" },
-        { name: "op", label: "Operador", type: "text", placeholder: "==, >, <, !=" },
-        { name: "value", label: "Valor", type: "text", placeholder: "10" }
-    ],
+document.querySelectorAll(".blockButton").forEach(btn => {
+    btn.addEventListener("click", () => {
+        createBlock(btn.dataset.type);
+    });
+});
 
-    "wait": [
-        { name: "seconds", label: "Segundos", type: "number", placeholder: "1" }
-    ]
-};
-
-// ============================================================================
-//                       VARIABLES DEL CONSTRUCTOR
-// ============================================================================
-let blocks = [];         // lista de bloques creados
-let selectedBlock = null; // bloque seleccionado para edición
-
-// ============================================================================
-//                    FUNCIÓN PARA AGREGAR BLOQUES
-// ============================================================================
-function addBlock(type) {
-    const id = Date.now() + Math.floor(Math.random() * 99999);
+function createBlock(type) {
+    const id = Date.now();
 
     const block = {
-        id: id,
-        type: type,
-        params: {}
+        id,
+        type,
+        props: {}
     };
 
     blocks.push(block);
-    renderBlocks();
+
+    const div = document.createElement("div");
+    div.className = "builder-block";
+    div.textContent = `${type} (${id})`;
+    div.dataset.id = id;
+
+    div.addEventListener("click", () => selectBlock(id));
+
+    builderArea.appendChild(div);
 }
 
-// ============================================================================
-//                       FUNCIÓN PARA RENDERIZAR
-// ============================================================================
-function renderBlocks() {
-    const container = document.getElementById("builderArea");
-    container.innerHTML = "";
+function selectBlock(id) {
+    selectedBlock = blocks.find(b => b.id == id);
 
-    blocks.forEach(block => {
-        const blockDiv = document.createElement("div");
-        blockDiv.className = "blockItem";
-        blockDiv.textContent = `${block.type} (${block.id})`;
+    if (!selectedBlock) return;
 
-        // 👇 ESTA ES LA PARTE QUE FALTABA
-        blockDiv.onclick = () => {
-            selectedBlock = block;
-            renderProperties(block);
-        };
-
-        container.appendChild(blockDiv);
-    });
-}
-
-
-// ============================================================================
-//                FUNCIÓN PARA MOSTRAR PROPIEDADES EN PANEL DERECHO
-// ============================================================================
-function renderProperties(block) {
-    const panel = document.getElementById("propertiesPanel");
-    panel.innerHTML = "";
+    propertiesBox.innerHTML = "";
 
     const title = document.createElement("h3");
-    title.textContent = `Propiedades: ${block.type}`;
-    panel.appendChild(title);
+    title.innerText = "Propiedades del Bloque";
+    propertiesBox.appendChild(title);
 
-    const props = blockProperties[block.type];
-
-    if (!props) {
-        panel.innerHTML += "<p>Este bloque no tiene propiedades.</p>";
-        return;
+    if (selectedBlock.type === "read_excel") {
+        addInput("Ruta del archivo Excel", "path");
     }
 
-    props.forEach(prop => {
-        const label = document.createElement("label");
-        label.textContent = prop.label;
-        panel.appendChild(label);
+    if (selectedBlock.type === "send_message") {
+        addInput("Mensaje", "message");
+    }
 
-        const input = document.createElement("input");
-        input.type = prop.type;
-        input.placeholder = prop.placeholder;
-        input.value = block.params[prop.name] || "";
+    if (selectedBlock.type === "wait") {
+        addInput("Tiempo (segundos)", "seconds");
+    }
 
-        input.oninput = () => {
-            block.params[prop.name] = input.value;
-        };
+    if (selectedBlock.type === "conditional") {
+        addInput("Condición", "condition");
+    }
+}
 
-        panel.appendChild(input);
+function addInput(labelText, propName) {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = selectedBlock.props[propName] || "";
+
+    input.addEventListener("input", () => {
+        selectedBlock.props[propName] = input.value;
     });
+
+    propertiesBox.appendChild(label);
+    propertiesBox.appendChild(input);
+    propertiesBox.appendChild(document.createElement("br"));
 }
 
-// ============================================================================
-//                    DESCARGA DEL BOT EN FORMATO JSON
-// ============================================================================
-function downloadBot() {
-    const jsonData = JSON.stringify(blocks, null, 4);
+document.getElementById("downloadBtn").addEventListener("click", () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(blocks, null, 4));
+    const dl = document.createElement("a");
+    dl.setAttribute("href", dataStr);
+    dl.setAttribute("download", "my_bot.bot.json");
+    dl.click();
+});
 
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "my_bot.bot.json";
-    a.click();
-
-    URL.revokeObjectURL(url);
-}
-
-// ============================================================================
-//                     RESET DEL CONSTRUCTOR
-// ============================================================================
-function resetBuilder() {
+document.getElementById("resetBtn").addEventListener("click", () => {
     blocks = [];
-    selectedBlock = null;
+    builderArea.innerHTML = "";
+    propertiesBox.innerHTML = "Selecciona un bloque";
+});
 
-    document.getElementById("builderArea").innerHTML = "";
-    document.getElementById("propertiesPanel").innerHTML = "Selecciona un bloque";
-}
+
 
 
 
