@@ -2,45 +2,38 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hanzzel Bot Builder ∑Δ</title>
+    <title>Hanzzel V-BOT Builder ∑Δ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-
-    <!-- PANEL IZQUIERDO -->
-    <div class="left-panel">
+<div id="app">
+    <div id="leftPanel">
         <h2>Bloques</h2>
 
-        <button class="block-btn" onclick="addBlock('read_excel')">Leer Excel</button>
-        <button class="block-btn" onclick="addBlock('send_message')">Enviar Mensaje</button>
-        <button class="block-btn" onclick="addBlock('conditional')">Condicional</button>
-        <button class="block-btn" onclick="addBlock('wait')">Esperar</button>
+        <button class="block-btn" onclick="addBlock('send_message')">✉️ Enviar Mensaje</button>
+        <button class="block-btn" onclick="addBlock('read_excel')">📘 Leer Excel</button>
+        <button class="block-btn" onclick="addBlock('wait')">⏳ Esperar</button>
+        <button class="block-btn" onclick="addBlock('conditional')">🔀 Condicional</button>
     </div>
 
-    <!-- ZONA CENTRAL -->
-    <div class="center-panel">
-        <div id="blockList"></div>
-
-        <div class="bottom-buttons">
-            <button onclick="downloadBot()">Descargar Bot</button>
-            <button onclick="resetBot()">Reset</button>
-        </div>
+    <div id="centerPanel">
+        <h2>Flujo del Bot</h2>
+        <ul id="blockList"></ul>
+        <button id="downloadBtn" onclick="downloadBot()">⬇ Descargar Bot</button>
     </div>
 
-    <!-- PANEL DERECHO -->
-    <div class="right-panel">
+    <div id="rightPanel">
         <h2>Propiedades</h2>
-        <div id="propertiesPanel">Selecciona un bloque</div>
+        <div id="propertiesPanel">Selecciona un bloque.</div>
     </div>
-
 </div>
 
 <script src="script.js"></script>
 </body>
 </html>
+
+
 
 
 
