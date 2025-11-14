@@ -1,46 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Hanzzel Bot Builder ∑Δ</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanzzel Bot Builder ∑Δ</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div id="container">
 
     <!-- PANEL IZQUIERDO -->
     <div id="leftPanel">
-        <h3>Bloques</h3>
+        <h2>Bloques</h2>
 
-        <button onclick="addBlock('read_excel')">Leer Excel</button>
-        <button onclick="addBlock('send_message')">Enviar Mensaje</button>
-        <button onclick="addBlock('if')">Condicional</button>
-        <button onclick="addBlock('wait')">Esperar</button>
+        <button class="blockButton" data-type="read_excel">Leer Excel</button>
+        <button class="blockButton" data-type="send_message">Enviar Mensaje</button>
+        <button class="blockButton" data-type="conditional">Condicional</button>
+        <button class="blockButton" data-type="wait">Esperar</button>
     </div>
 
-    <!-- ÁREA CENTRAL -->
+    <!-- ÁREA CENTRAL DEL BUILDER -->
     <div id="builderArea"></div>
 
     <!-- PANEL DERECHO -->
     <div id="rightPanel">
-        <h3>Propiedades</h3>
-        <div id="propertiesPanel">Selecciona un bloque</div>
+        <h2>Propiedades</h2>
+        <div id="propertiesBox">Selecciona un bloque</div>
     </div>
 
 </div>
 
-<!-- BARRA DE BOTONES INFERIOR -->
-<div id="buttons">
-    <button onclick="downloadBot()">Descargar Bot</button>
-    <button onclick="resetBuilder()">Reset</button>
+<!-- BOTONES FINALES -->
+<div id="footerButtons">
+    <button id="downloadBtn">Descargar Bot</button>
+    <button id="resetBtn">Reset</button>
 </div>
 
 <script src="script.js"></script>
-
 </body>
 </html>
+
+
 
 
 
