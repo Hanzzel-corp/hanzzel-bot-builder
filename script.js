@@ -1,94 +1,115 @@
 let blocks = [];
-let selectedBlock = null;
+let selectedBlockId = null;
 
-const builderArea = document.getElementById("builderArea");
-const propertiesBox = document.getElementById("propertiesBox");
-
-document.querySelectorAll(".blockButton").forEach(btn => {
-    btn.addEventListener("click", () => {
-        createBlock(btn.dataset.type);
-    });
-});
-
-function createBlock(type) {
+function addBlock(type) {
     const id = Date.now();
-
-    const block = {
-        id,
-        type,
-        props: {}
-    };
+    const block = { id, type, props: {} };
 
     blocks.push(block);
+    renderBlocks();
+}
 
-    const div = document.createElement("div");
-    div.className = "builder-block";
-    div.textContent = `${type} (${id})`;
-    div.dataset.id = id;
+function renderBlocks() {
+    const container = document.getElementById("blockList");
+    container.innerHTML = "";
 
-    div.addEventListener("click", () => selectBlock(id));
+    blocks.forEach(block => {
+        const div = document.createElement("div");
+        div.className = "block-item";
+        div.innerText = `${block.type} (${block.id})`;
 
-    builderArea.appendChild(div);
+        div.onclick = () => selectBlock(block.id);
+
+        container.appendChild(div);
+    });
 }
 
 function selectBlock(id) {
-    selectedBlock = blocks.find(b => b.id == id);
+    selectedBlockId = id;
+    const block = blocks.find(b => b.id === id);
 
-    if (!selectedBlock) return;
+    const panel = document.getElementById("propertiesPanel");
+    panel.innerHTML = "";
 
-    propertiesBox.innerHTML = "";
+    if (!block) return;
 
-    const title = document.createElement("h3");
-    title.innerText = "Propiedades del Bloque";
-    propertiesBox.appendChild(title);
+    // --- FORMULARIOS POR TIPO DE BLOQUE ---
+    if (block.type === "read_excel") {
+        panel.innerHTML = `
+            <label class='prop-label'>Ruta del archivo:</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'path', this.value)">
 
-    if (selectedBlock.type === "read_excel") {
-        addInput("Ruta del archivo Excel", "path");
+            <label class='prop-label'>Hoja:</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'sheet', this.value)">
+
+            <label class='prop-label'>Rango (opcional):</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'range', this.value)">
+        `;
     }
 
-    if (selectedBlock.type === "send_message") {
-        addInput("Mensaje", "message");
+    else if (block.type === "send_message") {
+        panel.innerHTML = `
+            <label class='prop-label'>Mensaje:</label>
+            <textarea class='prop-textarea' onchange="updateProp(${id}, 'message', this.value)"></textarea>
+
+            <label class='prop-label'>Destino:</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'target', this.value)">
+
+            <label class='prop-label'>Modo:</label>
+            <select class='prop-select' onchange="updateProp(${id}, 'mode', this.value)">
+                <option value="log">log</option>
+                <option value="print">print</option>
+                <option value="telegram">telegram</option>
+                <option value="whatsapp">whatsapp</option>
+            </select>
+        `;
     }
 
-    if (selectedBlock.type === "wait") {
-        addInput("Tiempo (segundos)", "seconds");
+    else if (block.type === "conditional") {
+        panel.innerHTML = `
+            <label class='prop-label'>Condición:</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'condition', this.value)">
+
+            <label class='prop-label'>Acción si verdadero:</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'true_action', this.value)">
+
+            <label class='prop-label'>Acción si falso:</label>
+            <input class='prop-input' onchange="updateProp(${id}, 'false_action', this.value)">
+        `;
     }
 
-    if (selectedBlock.type === "conditional") {
-        addInput("Condición", "condition");
+    else if (block.type === "wait") {
+        panel.innerHTML = `
+            <label class='prop-label'>Tiempo (segundos):</label>
+            <input type="number" class='prop-input' onchange="updateProp(${id}, 'time', this.value)">
+        `;
     }
 }
 
-function addInput(labelText, propName) {
-    const label = document.createElement("label");
-    label.textContent = labelText;
+function updateProp(id, key, value) {
+    const block = blocks.find(b => b.id === id);
+    if (!block) return;
 
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = selectedBlock.props[propName] || "";
-
-    input.addEventListener("input", () => {
-        selectedBlock.props[propName] = input.value;
-    });
-
-    propertiesBox.appendChild(label);
-    propertiesBox.appendChild(input);
-    propertiesBox.appendChild(document.createElement("br"));
+    block.props[key] = value;
 }
 
-document.getElementById("downloadBtn").addEventListener("click", () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(blocks, null, 4));
-    const dl = document.createElement("a");
-    dl.setAttribute("href", dataStr);
-    dl.setAttribute("download", "my_bot.bot.json");
-    dl.click();
-});
+function downloadBot() {
+    const data = JSON.stringify(blocks, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
 
-document.getElementById("resetBtn").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "bot.json";
+    a.click();
+}
+
+function resetBot() {
     blocks = [];
-    builderArea.innerHTML = "";
-    propertiesBox.innerHTML = "Selecciona un bloque";
-});
+    selectedBlockId = null;
+    renderBlocks();
+    document.getElementById("propertiesPanel").innerText = "Selecciona un bloque";
+}
+
 
 
 
