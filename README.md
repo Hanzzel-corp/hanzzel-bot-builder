@@ -1,5 +1,6 @@
 # hanzzel-bot-builder
-bot de trabajos
+
+Repositorio del proyecto Hanzzel Bot Builder. El README raíz identifica el proyecto como una herramienta de creación de bots; el alcance funcional, los componentes disponibles y los pasos de uso quedan pendientes de documentar a partir de los archivos reales del repositorio.
 
 ---
 
